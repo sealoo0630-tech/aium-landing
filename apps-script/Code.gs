@@ -10,8 +10,8 @@ const TABS = {
   cta:        { name: '클릭',     cols: ['시각','세션','버튼','utm_source','utm_campaign'],
                 keys: ['ts','sid','cta','utm_source','utm_campaign'] },
   plan_click: { name: '클릭',     cols: null, keys: ['ts','sid','plan','utm_source','utm_campaign'] },
-  lead:       { name: '신청',     cols: ['시각','세션','브랜드','담당자','이메일','연락처','카테고리','셀러규모','라이브','현재방법','설명','마케팅동의','utm_source','utm_medium','utm_campaign','utm_content','기기','처리상태'],
-                keys: ['ts','sid','brand','name','email','phone','category','sellerSize','liveRequired','currentMethod','message','marketingConsent','utm_source','utm_medium','utm_campaign','utm_content','device','_status'] },
+  lead:       { name: '신청',     cols: ['시각','세션','브랜드','담당자','이메일','연락처','카테고리','셀러규모','라이브','현재방법','설명','마케팅동의','utm_source','utm_medium','utm_campaign','utm_content','기기','처리상태','하는 일','섭외 빈도','인터뷰 동의'],
+                keys: ['ts','sid','brand','name','email','phone','category','sellerSize','liveRequired','currentMethod','message','marketingConsent','utm_source','utm_medium','utm_campaign','utm_content','device','_status','role','frequency','interviewOk'] },
   preorder:   { name: '사전예약', cols: ['시각','세션','요금제','브랜드','이메일','가격 반응','utm_source','utm_campaign','기기'],
                 keys: ['ts','sid','plan','brand','email','priceFit','utm_source','utm_campaign','device'] }
 };
@@ -68,6 +68,13 @@ function setup() {
   s.getRange('C2:C6').setNumberFormat('0.0%');
   s.getRange('A8').setValue('광고 채널별 신청 수').setFontWeight('bold');
   s.getRange('A9').setFormula('=IFERROR(QUERY(신청!M2:M, "select M, count(M) where M is not null group by M label count(M) \'신청\'", 0), "아직 없음")');
+  s.getRange('A15').setValue('하는 일(페르소나)별 신청 수').setFontWeight('bold');
+  s.getRange('A16').setFormula('=IFERROR(QUERY(신청!S2:S, "select S, count(S) where S is not null group by S label count(S) \'신청\'", 0), "아직 없음")');
+  s.getRange('D15').setValue('섭외 빈도별 신청 수').setFontWeight('bold');
+  s.getRange('D16').setFormula('=IFERROR(QUERY(신청!T2:T, "select T, count(T) where T is not null group by T label count(T) \'신청\'", 0), "아직 없음")');
+  // 이미 있는 「신청」 탭에 새 열 제목 채우기
+  const lead = ss.getSheetByName(TABS.lead.name);
+  if (lead) lead.getRange(1, 1, 1, TABS.lead.cols.length).setValues([TABS.lead.cols]).setFontWeight('bold');
   s.autoResizeColumns(1, 4);
   const extra = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1');
   if (extra && ss.getSheets().length > 1) ss.deleteSheet(extra);
@@ -100,7 +107,7 @@ function notify_(d) {
     const me = Session.getEffectiveUser().getEmail();
     const title = d.type === 'lead' ? `[AiUM] 샘플 리포트 신청: ${d.brand}` : `[AiUM] 사전예약(${d.plan}): ${d.brand}`;
     const body = d.type === 'lead'
-      ? `브랜드: ${d.brand}\n담당자: ${d.name}\n이메일: ${d.email}\n카테고리: ${d.category}\n셀러 규모: ${d.sellerSize}\n라이브: ${d.liveRequired}\n현재 방법: ${d.currentMethod}\n설명: ${d.message || '-'}\n유입: ${d.utm_source || '직접'} / ${d.utm_campaign || '-'}\n\n48시간 안에 샘플 리포트를 보내세요.`
+      ? `하는 일: ${d.role || '-'} (섭외 빈도: ${d.frequency || '-'}, 인터뷰: ${d.interviewOk || 'N'})\n브랜드: ${d.brand}\n담당자: ${d.name}\n이메일: ${d.email}\n카테고리: ${d.category}\n셀러 규모: ${d.sellerSize}\n라이브: ${d.liveRequired}\n현재 방법: ${d.currentMethod}\n설명: ${d.message || '-'}\n유입: ${d.utm_source || '직접'} / ${d.utm_campaign || '-'}\n\n48시간 안에 샘플 리포트를 보내세요.`
       : `요금제: ${d.plan}\n브랜드: ${d.brand}\n이메일: ${d.email}\n가격 반응: ${d.priceFit}\n유입: ${d.utm_source || '직접'}`;
     MailApp.sendEmail(me, title, body);
   } catch (e) {}

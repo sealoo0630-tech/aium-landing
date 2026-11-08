@@ -8,6 +8,14 @@
 <meta property="og:title" content="AiUM — 라이브 셀러, 아직도 하나씩 찾으세요?">
 <meta property="og:description" content="셀러 127명을 78초에 찾아 A/B/C 등급으로. 무료 맞춤 샘플 리포트 신청.">
 <meta property="og:image" content="assets/hero.jpg">
+<!-- Google Analytics 4: 방문 통계만. 입력값(이름·이메일·연락처 등)은 보내지 않는다 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-W7PKF4RE0K"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-W7PKF4RE0K');
+</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root{
@@ -256,13 +264,13 @@ footer a{color:var(--sub)}
 
 <section id="pricing">
   <div class="wrap">
-    <span class="eyebrow">요금 (출시 예정)</span>
-    <h2>셀러 찾는 데 쓰던 3시간보다 저렴하게</h2>
-    <p class="lead">지금은 정식 출시 전입니다. 사전예약하시면 출시 때 가장 먼저 안내드립니다.</p>
+    <span class="eyebrow">플랜 (출시 예정)</span>
+    <h2>팀 규모에 맞는 플랜으로 시작하세요</h2>
+    <p class="lead">지금은 정식 출시 전입니다. 요금은 도입 상담 후 안내드리며, 사전예약하시면 출시 때 가장 먼저 연락드립니다.</p>
     <div class="plans">
       <div class="plan">
         <h3>Starter</h3>
-        <div class="price">99,000원<small> / 월</small></div>
+        <div class="price"><small>도입 상담 후 안내</small></div>
         <div class="for">1인 사업자·소규모 팀</div>
         <ul><li>검색어 5개</li><li>매일 아침 리포트 1회</li><li>점수표 1개</li><li>DM 초안·콘텐츠 제안</li></ul>
         <button class="btn ghost" data-plan="Starter">Starter 사전예약</button>
@@ -270,14 +278,14 @@ footer a{color:var(--sub)}
       <div class="plan pop">
         <div class="tag">추천</div>
         <h3>Growth</h3>
-        <div class="price">299,000원<small> / 월</small></div>
+        <div class="price"><small>도입 상담 후 안내</small></div>
         <div class="for">중소 브랜드 마케팅팀</div>
         <ul><li>검색어·점수표 확대</li><li>여러 제품군 동시 운영</li><li>발송·회신 이력 관리</li><li>점수표 맞춤 설정 지원</li></ul>
         <button class="btn" data-plan="Growth">Growth 사전예약</button>
       </div>
       <div class="plan">
         <h3>Enterprise</h3>
-        <div class="price">599,000원~<small> / 월</small></div>
+        <div class="price"><small>도입 상담 후 안내</small></div>
         <div class="for">대행사·MCN</div>
         <ul><li>여러 브랜드 계정</li><li>맞춤 점수표·연동</li><li>전담 지원</li></ul>
         <button class="btn ghost" data-plan="Enterprise">Enterprise 문의·예약</button>
@@ -308,9 +316,9 @@ footer a{color:var(--sub)}
           <select id="role" name="role" required>
             <option value="">선택</option><option>제조·브랜드사 (자사 제품)</option><option>유통·공구 벤더 (여러 브랜드 대행)</option><option>라이브커머스 에이전시·MCN</option><option>쇼핑몰·소매 판매자</option><option>셀러·인플루언서 본인</option><option>기타</option>
           </select></div>
-        <div class="f"><label for="freq">셀러를 얼마나 자주 찾으세요?</label>
-          <select id="freq" name="frequency" required>
-            <option value="">선택</option><option>거의 매주</option><option>한 달에 1~2번</option><option>분기에 1번 이하</option><option>아직 계획 단계</option>
+        <div class="f"><label for="freq">셀러를 얼마나 자주 찾으세요? <span class="opt">(선택)</span></label>
+          <select id="freq" name="frequency">
+            <option value="">선택 안 함</option><option>거의 매주</option><option>한 달에 1~2번</option><option>분기에 1번 이하</option><option>아직 계획 단계</option>
           </select></div>
       </div>
       <div class="grid2">
@@ -318,19 +326,25 @@ footer a{color:var(--sub)}
           <select id="category" name="category" required>
             <option value="">선택</option><option>여성의류·잡화</option><option>남성의류·잡화</option><option>뷰티·화장품</option><option>식품·건강식품</option><option>생활·주방</option><option>유아·키즈</option><option>반려동물</option><option>기타</option>
           </select></div>
-        <div class="f"><label for="size">원하는 셀러 규모(구독자)</label>
-          <select id="size" name="sellerSize" required>
-            <option value="">선택</option><option>1천~1만</option><option>1만~5만</option><option>5만~20만</option><option>20만 이상</option><option>상관없음</option>
+        <div class="f"><label for="size">원하는 셀러 규모(구독자) <span class="opt">(선택)</span></label>
+          <select id="size" name="sellerSize">
+            <option value="">선택 안 함</option><option>1천~1만</option><option>1만~5만</option><option>5만~20만</option><option>20만 이상</option><option>상관없음</option>
           </select></div>
       </div>
       <div class="grid2">
-        <div class="f"><label for="live">라이브 판매 경험</label>
-          <select id="live" name="liveRequired" required>
-            <option value="">선택</option><option>꼭 필요</option><option>있으면 좋음</option><option>상관없음</option>
+        <div class="f"><label for="live">라이브 판매 경험 <span class="opt">(선택)</span></label>
+          <select id="live" name="liveRequired">
+            <option value="">선택 안 함</option><option>꼭 필요</option><option>있으면 좋음</option><option>상관없음</option>
           </select></div>
-        <div class="f"><label for="method">지금 셀러를 찾는 방법</label>
-          <select id="method" name="currentMethod" required>
-            <option value="">선택</option><option>직접 검색</option><option>대행사·MCN</option><option>인플루언서 플랫폼</option><option>아직 안 함</option>
+        <div class="f"><label for="method">지금 셀러를 찾는 방법 <span class="opt">(선택)</span></label>
+          <select id="method" name="currentMethod">
+            <option value="">선택 안 함</option><option>직접 검색</option><option>대행사·MCN</option><option>인플루언서 플랫폼</option><option>아직 안 함</option>
+          </select></div>
+      </div>
+      <div class="grid2">
+        <div class="f"><label for="csize">회사 규모 <span class="opt">(선택)</span></label>
+          <select id="csize" name="companySize">
+            <option value="">선택 안 함</option><option>1인</option><option>2~5명</option><option>6~20명</option><option>21명 이상</option>
           </select></div>
       </div>
       <div class="f"><label for="target">찾는 셀러·제품 설명 <span class="opt">(선택)</span></label><textarea id="target" name="message" maxlength="500" placeholder="예) 4050 여성 니트 신상, 라이브로 팔아 줄 셀러"></textarea></div>
@@ -339,7 +353,7 @@ footer a{color:var(--sub)}
         <label><input type="checkbox" id="agree" required> <span>[필수] 개인정보 수집·이용에 동의합니다.</span></label>
         <details><summary>내용 보기</summary>
           <table>
-            <tr><td>수집 항목</td><td>브랜드·회사명, 담당자 이름, 이메일, 연락처(선택), 하는 일·셀러 섭외 빈도, 판매 카테고리·셀러 조건</td></tr>
+            <tr><td>수집 항목</td><td>브랜드·회사명, 담당자 이름, 이메일, 연락처(선택), 하는 일·셀러 섭외 빈도, 판매 카테고리·셀러 조건, 회사 규모(선택)</td></tr>
             <tr><td>이용 목적</td><td>맞춤 샘플 리포트 작성·발송, 서비스 출시 안내, 문의 응대, (선택 시) 인터뷰 요청 연락</td></tr>
             <tr><td>보유 기간</td><td>수집일로부터 1년 또는 동의 철회 시까지 (철회 즉시 파기)</td></tr>
           </table>
@@ -357,7 +371,7 @@ footer a{color:var(--sub)}
       <h3>신청이 접수되었습니다</h3>
       <p>48시간 안에 <b id="doneEmail"></b>(으)로 샘플 리포트를 보내 드립니다.</p>
       <p style="margin-top:14px">매일 받아 보고 싶으시다면, 출시 알림을 먼저 받아 두세요.</p>
-      <p style="margin-top:12px"><a class="btn ghost" href="#pricing" data-cta="after-lead">요금제 보고 사전예약하기</a></p>
+      <p style="margin-top:12px"><a class="btn ghost" href="#pricing" data-cta="after-lead">플랜 보고 사전예약하기</a></p>
     </div>
   </div>
 </section>
@@ -379,6 +393,7 @@ footer a{color:var(--sub)}
   <div class="wrap">
     <p><b>AiUM</b><span id="contactLine"></span></p>
     <p style="margin-top:6px">개인정보 보호책임자: 이미희 · 수집한 개인정보는 샘플 리포트 발송과 출시 안내에만 사용하며 제3자에게 제공하지 않습니다. 삭제를 원하시면 문의 이메일로 알려 주세요.</p>
+    <p style="margin-top:6px">이 사이트는 방문 통계(Google Analytics)를 수집합니다. 쿠키를 사용하며, 신청서에 입력하신 이름·이메일·연락처 등은 보내지 않습니다.</p>
   </div>
 </footer>
 
@@ -393,8 +408,8 @@ footer a{color:var(--sub)}
       <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
       <div class="f"><label for="pBrand">브랜드·회사명</label><input id="pBrand" name="brand" required maxlength="80"></div>
       <div class="f"><label for="pEmail">이메일</label><input id="pEmail" name="email" type="email" required maxlength="120"></div>
-      <div class="f"><label for="pPrice">이 가격이면 쓰시겠어요?</label>
-        <select id="pPrice" name="priceFit" required><option value="">선택</option><option>네, 적당해요</option><option>조금 비싸요</option><option>많이 비싸요</option><option>더 내더라도 기능이 더 필요해요</option></select></div>
+      <div class="f"><label for="pPrice">어떤 요금 방식이 맞으세요?</label>
+        <select id="pPrice" name="priceFit" required><option value="">선택</option><option>월 구독</option><option>건별(리포트 1회씩)</option><option>성과에 따라</option><option>상담 후 정하고 싶어요</option></select></div>
       <div class="consent" style="margin-bottom:12px">
         <label><input type="checkbox" id="pAgree" required> <span>[필수] 출시 안내를 위한 개인정보(브랜드명, 이메일) 수집·이용에 동의합니다. 보유 기간: 1년 또는 철회 시까지.</span></label>
       </div>
@@ -426,7 +441,9 @@ const utm = {
   utm_source: qs.get("utm_source") || store.get("utm_source") || "",
   utm_medium: qs.get("utm_medium") || store.get("utm_medium") || "",
   utm_campaign: qs.get("utm_campaign") || store.get("utm_campaign") || "",
-  utm_content: qs.get("utm_content") || store.get("utm_content") || ""
+  utm_content: qs.get("utm_content") || store.get("utm_content") || "",
+  // 광고 구분용(예: persona=brand, persona=vendor). 영문·숫자·_- 30자까지만 받는다
+  persona: ((qs.get("persona") || store.get("persona") || "").match(/^[A-Za-z0-9_-]{1,30}$/) || [""])[0]
 };
 Object.entries(utm).forEach(([k,v]) => v && store.set(k,v));
 
@@ -450,6 +467,18 @@ const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 // 샘플 리포트 신청
 const lf = document.getElementById("leadForm");
+
+// GA4 이벤트: persona 값만 붙인다(입력값은 보내지 않음)
+const ga = (name) => { try { if (window.gtag) gtag("event", name, { persona: utm.persona || "(none)" }); } catch(e){} };
+// 신청서 열기: 신청서가 화면에 보이거나, 신청 버튼(#apply)을 누르거나, 입력칸을 처음 누를 때. 페이지당 1회
+let formOpened = false;
+const formOpen = () => { if (formOpened) return; formOpened = true; ga("form_open"); };
+if ("IntersectionObserver" in window) {
+  const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { formOpen(); io.disconnect(); } }, { threshold: 0.3 });
+  io.observe(lf);
+}
+document.querySelectorAll('a[href="#apply"]').forEach(a => a.addEventListener("click", formOpen));
+lf.addEventListener("focusin", formOpen);
 lf.addEventListener("submit", async e => {
   e.preventDefault();
   const err = document.getElementById("formErr");
@@ -464,6 +493,7 @@ lf.addEventListener("submit", async e => {
   fd.marketingConsent = document.getElementById("mkt").checked ? "Y" : "N";
   fd.interviewOk = document.getElementById("itv").checked ? "Y" : "N";
   await send("lead", fd);
+  ga("generate_lead");
   store.set("lead_brand", fd.brand); store.set("lead_email", fd.email);
   document.getElementById("doneEmail").textContent = fd.email;
   lf.style.display = "none"; document.getElementById("leadDone").style.display = "block";

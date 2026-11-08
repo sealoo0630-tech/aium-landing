@@ -5,16 +5,46 @@
  */
 
 const TABS = {
-  visit:      { name: '방문',     cols: ['시각','세션','utm_source','utm_medium','utm_campaign','utm_content','referrer','기기'],
-                keys: ['ts','sid','utm_source','utm_medium','utm_campaign','utm_content','referrer','device'] },
+  // 새 칸은 항상 맨 뒤에 붙인다. 요약 수식이 열 글자(M, S, T)를 쓰기 때문이다.
+  visit:      { name: '방문',     cols: ['시각','세션','utm_source','utm_medium','utm_campaign','utm_content','referrer','기기','persona'],
+                keys: ['ts','sid','utm_source','utm_medium','utm_campaign','utm_content','referrer','device','persona'] },
   cta:        { name: '클릭',     cols: ['시각','세션','버튼','utm_source','utm_campaign'],
                 keys: ['ts','sid','cta','utm_source','utm_campaign'] },
   plan_click: { name: '클릭',     cols: null, keys: ['ts','sid','plan','utm_source','utm_campaign'] },
-  lead:       { name: '신청',     cols: ['시각','세션','브랜드','담당자','이메일','연락처','카테고리','셀러규모','라이브','현재방법','설명','마케팅동의','utm_source','utm_medium','utm_campaign','utm_content','기기','처리상태','하는 일','섭외 빈도','인터뷰 동의'],
-                keys: ['ts','sid','brand','name','email','phone','category','sellerSize','liveRequired','currentMethod','message','marketingConsent','utm_source','utm_medium','utm_campaign','utm_content','device','_status','role','frequency','interviewOk'] },
-  preorder:   { name: '사전예약', cols: ['시각','세션','요금제','브랜드','이메일','가격 반응','utm_source','utm_campaign','기기'],
-                keys: ['ts','sid','plan','brand','email','priceFit','utm_source','utm_campaign','device'] }
+  lead:       { name: '신청',     cols: ['시각','세션','브랜드','담당자','이메일','연락처','카테고리','셀러규모','라이브','현재방법','설명','마케팅동의','utm_source','utm_medium','utm_campaign','utm_content','기기','처리상태','하는 일','섭외 빈도','인터뷰 동의','회사 규모','persona'],
+                keys: ['ts','sid','brand','name','email','phone','category','sellerSize','liveRequired','currentMethod','message','marketingConsent','utm_source','utm_medium','utm_campaign','utm_content','device','_status','role','frequency','interviewOk','companySize','persona'] },
+  preorder:   { name: '사전예약', cols: ['시각','세션','요금제','브랜드','이메일','가격 반응','utm_source','utm_campaign','기기','persona'],
+                keys: ['ts','sid','plan','brand','email','priceFit','utm_source','utm_campaign','device','persona'] }
 };
+
+/**
+ * 11/7 추가 칸 반영: 이미 있는 시트에서 한 번 실행한다. 기존 행과 요약 수식은 건드리지 않는다.
+ * - 방문·신청·사전예약 탭: 비어 있는 제목 칸에만 새 열 제목을 쓴다.
+ * - 요약 탭: G15(persona별), J15(회사 규모별) 집계. 그 자리에 이미 무언가 있으면 건너뛴다.
+ */
+function addColumns1107() {
+  const ss = ss_();
+  ['visit', 'lead', 'preorder'].forEach(k => {
+    const t = TABS[k];
+    const sh = ss.getSheetByName(t.name);
+    if (!sh) return;
+    t.cols.forEach((c, i) => {
+      const cell = sh.getRange(1, i + 1);
+      if (cell.getValue() === '') cell.setValue(c).setFontWeight('bold');
+    });
+  });
+  const s = ss.getSheetByName('요약');
+  if (!s) { Logger.log('요약 탭 없음: setup()을 먼저 실행'); return; }
+  const put = (a1, title, col) => {
+    const head = s.getRange(a1), body = head.offset(1, 0, 6, 2);
+    if (head.getValue() !== '' || body.getValues().some(r => r.some(v => v !== ''))) { Logger.log(a1 + ' 자리에 값이 있어 건너뜀'); return; }
+    head.setValue(title).setFontWeight('bold');
+    head.offset(1, 0).setFormula(`=IFERROR(QUERY(신청!${col}2:${col}, "select ${col}, count(${col}) where ${col} is not null group by ${col} label count(${col}) '신청'", 0), "아직 없음")`);
+  };
+  put('G15', '광고 페르소나(persona)별 신청 수', 'W');
+  put('J15', '회사 규모별 신청 수', 'V');
+  Logger.log('11/7 칸 추가 완료');
+}
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
@@ -75,6 +105,7 @@ function setup() {
   // 이미 있는 「신청」 탭에 새 열 제목 채우기
   const lead = ss.getSheetByName(TABS.lead.name);
   if (lead) lead.getRange(1, 1, 1, TABS.lead.cols.length).setValues([TABS.lead.cols]).setFontWeight('bold');
+  addColumns1107();
   s.autoResizeColumns(1, 4);
   const extra = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1');
   if (extra && ss.getSheets().length > 1) ss.deleteSheet(extra);
@@ -107,8 +138,8 @@ function notify_(d) {
     const me = Session.getEffectiveUser().getEmail();
     const title = d.type === 'lead' ? `[AiUM] 샘플 리포트 신청: ${d.brand}` : `[AiUM] 사전예약(${d.plan}): ${d.brand}`;
     const body = d.type === 'lead'
-      ? `하는 일: ${d.role || '-'} (섭외 빈도: ${d.frequency || '-'}, 인터뷰: ${d.interviewOk || 'N'})\n브랜드: ${d.brand}\n담당자: ${d.name}\n이메일: ${d.email}\n카테고리: ${d.category}\n셀러 규모: ${d.sellerSize}\n라이브: ${d.liveRequired}\n현재 방법: ${d.currentMethod}\n설명: ${d.message || '-'}\n유입: ${d.utm_source || '직접'} / ${d.utm_campaign || '-'}\n\n48시간 안에 샘플 리포트를 보내세요.`
-      : `요금제: ${d.plan}\n브랜드: ${d.brand}\n이메일: ${d.email}\n가격 반응: ${d.priceFit}\n유입: ${d.utm_source || '직접'}`;
+      ? `하는 일: ${d.role || '-'} (섭외 빈도: ${d.frequency || '-'}, 인터뷰: ${d.interviewOk || 'N'})\n브랜드: ${d.brand}\n담당자: ${d.name}\n이메일: ${d.email}\n카테고리: ${d.category}\n셀러 규모: ${d.sellerSize || '-'}\n라이브: ${d.liveRequired || '-'}\n현재 방법: ${d.currentMethod || '-'}\n회사 규모: ${d.companySize || '-'}\n설명: ${d.message || '-'}\n유입: ${d.utm_source || '직접'} / ${d.utm_campaign || '-'} / persona ${d.persona || '-'}\n\n48시간 안에 샘플 리포트를 보내세요.`
+      : `요금제: ${d.plan}\n브랜드: ${d.brand}\n이메일: ${d.email}\n요금 방식(11/7 전 신청은 가격 반응): ${d.priceFit}\n유입: ${d.utm_source || '직접'}`;
     MailApp.sendEmail(me, title, body);
   } catch (e) {}
 }

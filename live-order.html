@@ -469,14 +469,20 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">
 let pasted = false;
 function prodHint(){
   const own = src.value.trim() && src.value.trim() !== SAMPLE.trim();
-  const same = document.getElementById("prods").value.trim() === SAMPLE_PRODS;
+  const pv = document.getElementById("prods").value.trim();
+  const same = pv === SAMPLE_PRODS || pv === "";
   document.getElementById("prodHint").style.display = (own && same) ? "block" : "none";
 }
 function markPaste(){ prodHint(); if(pasted) return; if(src.value.trim() !== SAMPLE.trim()){ pasted = true; ga("demo_paste"); } }
 document.getElementById("prods").addEventListener("input", prodHint);
 src.addEventListener("input", markPaste);
 src.addEventListener("paste", () => setTimeout(markPaste, 0));
-document.getElementById("clearBtn").addEventListener("click", () => { src.value = ""; src.focus(); });
+document.getElementById("clearBtn").addEventListener("click", () => {
+  src.value = "";
+  const pr = document.getElementById("prods");
+  pr.value = ""; pr.placeholder = "예: 양말, 니트 가디건 (쉼표로 구분)";
+  prodHint(); pr.focus();
+});
 
 document.getElementById("convertBtn").addEventListener("click", () => {
   const text = src.value;

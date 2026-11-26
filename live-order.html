@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>라이브 댓글 주문 정리 · 출고 수량표 | AiUM</title>
+<meta name="description" content="라이브 댓글을 붙여 넣으면 주문표와 상품별 출고 수량표가 바로 나옵니다. 재고를 직접 보유하고 포장·출고하는 라이브 판매자용.">
+<meta property="og:title" content="라이브 끝나고 댓글 주문 정리·출고 준비, 아직 손으로 하세요?">
+<meta property="og:description" content="댓글을 붙여 넣으면 주문표와 상품별 출고 수량표가 바로 나옵니다.">
+<meta name="robots" content="noindex">
+
+<!-- Google Analytics 4 (index.html과 같은 속성) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-W7PKF4RE0K"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-W7PKF4RE0K');
+</script>
+
+<style>
+:root{
+  --ink:#16203a; --sub:#56607a; --line:#e3e7f0; --bg:#ffffff; --soft:#f4f6fb;
+  --brand:#4b4fd6; --brand-d:#3a3db8; --brand-soft:#ecedfd;
+  --ok:#12a05c; --ok-soft:#e7f6ee; --warn:#c0392b; --warn-soft:#fdecea;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Pretendard Variable",Pretendard,-apple-system,"Malgun Gothic",sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;word-break:keep-all;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+a{color:var(--brand)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:16px;padding:14px 22px;border-radius:12px;background:var(--brand);color:#fff;text-decoration:none;transition:background .15s}
+.btn:hover{background:var(--brand-d)}
+.btn.ghost{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.6;cursor:default}
+
+header{border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;height:52px}
+.logo{font-weight:800;font-size:18px;letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+
+/* [1] 첫 화면 */
+.hero{padding:18px 0 22px}
+.tag{display:inline-block;font-size:12.5px;font-weight:700;color:var(--brand);background:var(--brand-soft);padding:4px 10px;border-radius:99px;margin-bottom:10px}
+h1{font-size:clamp(23px,5.6vw,34px);line-height:1.32;letter-spacing:-.02em}
+.sub{color:var(--sub);font-size:clamp(15px,3.8vw,17px);margin-top:8px}
+.ba{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin:16px 0 16px;background:var(--soft);border-radius:var(--r);padding:12px}
+.ba .cap{font-size:11.5px;font-weight:800;color:var(--sub);margin-bottom:5px}
+.ba .before{font-size:11.5px;line-height:1.55;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;color:#3a4460;white-space:nowrap;overflow:hidden}
+.ba .before span{display:block;overflow:hidden;text-overflow:ellipsis}
+.ba .arrow{font-size:20px;color:var(--brand);font-weight:800}
+.ba table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:11.5px}
+.ba th,.ba td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.ba th{background:var(--brand-soft);color:var(--brand-d);font-weight:800}
+.ba td.n{text-align:right;font-weight:800}
+.ba tr:last-child td{border-bottom:0}
+.hero .note{font-size:12.5px;color:var(--sub);margin-top:8px;text-align:center}
+
+/* [2] 체험 */
+section{padding:30px 0;border-top:1px solid var(--line)}
+h2{font-size:clamp(20px,4.8vw,26px);line-height:1.35;letter-spacing:-.015em;margin-bottom:6px}
+.desc{color:var(--sub);font-size:15px;margin-bottom:12px}
+textarea{font:inherit;font-size:15px;width:100%;min-height:200px;padding:12px;border:1.5px solid var(--line);border-radius:12px;resize:vertical;line-height:1.6;color:var(--ink)}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--brand-soft);border-color:var(--brand)}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.row .btn{flex:1 1 160px}
+.local{display:flex;gap:8px;align-items:flex-start;background:var(--ok-soft);color:#155c38;border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:10px}
+.plab{display:block;font-size:14px;font-weight:700;margin:6px 0 4px}.plab small{font-weight:400;color:var(--sub)}
+#prods{font:inherit;font-size:15px;width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:10px;color:var(--ink)}
+.hint{font-size:14px;background:#fff7e6;border:1px solid #f5d48a;border-radius:10px;padding:8px 12px;margin:0 0 10px}
+.rule{font-size:13px;color:var(--sub);margin-top:8px}
+#result{display:none;margin-top:20px}
+.res-head{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.pill{font-size:13px;font-weight:700;padding:5px 10px;border-radius:99px;background:var(--soft)}
+.pill.ok{background:var(--ok-soft);color:#155c38}
+.pill.bad{background:var(--warn-soft);color:var(--warn)}
+h3{font-size:16px;margin:16px 0 8px}
+.tbl{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.tbl table{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.tbl th{background:var(--soft);font-size:13px;color:var(--sub)}
+.tbl td.n{text-align:right;font-weight:800}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr.total td{background:var(--brand-soft);font-weight:800}
+.fail{margin-top:12px;background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:13.5px}
+.fail b{color:var(--warn)}
+.fail ul{margin:6px 0 0 18px}
+.zero{margin-top:4px;background:var(--warn-soft);border-radius:10px;padding:12px;font-size:14px}
+
+/* [3] 신청 */
+form{margin-top:8px}
+.f{margin-bottom:14px}
+.f label,.f .lab{display:block;font-size:14.5px;font-weight:700;margin-bottom:6px}
+.f .opt{color:var(--sub);font-weight:500}
+input,select{font:inherit;font-size:15.5px;padding:12px 13px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.yn label{display:flex;align-items:center;justify-content:center;gap:6px;border:1.5px solid var(--line);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;margin:0}
+.yn input{width:auto}
+.yn label:has(input:checked){border-color:var(--brand);background:var(--brand-soft);color:var(--brand-d)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.consent{background:var(--soft);border-radius:10px;padding:12px;font-size:13.5px;color:#3a4460;margin:4px 0 12px}
+.consent label{display:flex;gap:8px;align-items:flex-start;font-weight:700;color:var(--ink);cursor:pointer}
+.consent label input{width:auto;margin-top:4px}
+.consent table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+.consent td{padding:6px 4px;border-top:1px solid var(--line);vertical-align:top}
+.consent td:first-child{width:26%;font-weight:700}
+.err{color:var(--warn);font-size:13.5px;margin-bottom:10px;display:none}
+.hp{position:absolute;left:-9999px}
+.done{display:none;text-align:center;padding:26px 8px;background:var(--soft);border-radius:var(--r)}
+.done .big{font-size:36px}
+.done h3{font-size:20px;margin:6px 0}
+.done p{color:var(--sub)}
+
+footer{border-top:1px solid var(--line);padding:24px 0 90px;font-size:13px;color:var(--sub)}
+footer p+p{margin-top:6px}
+.mcta{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);display:none}
+.mcta.on{display:block}
+@media (min-width:760px){.mcta{display:none!important}}
+@media (max-width:380px){.grid2{grid-template-columns:1fr}.ba{grid-template-columns:1fr;}.ba .arrow{transform:rotate(90deg);justify-self:center}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><a class="logo" href="#top">AiUM</a></div></header>
+
+<main id="top">
+<!-- [1] 첫 화면 -->
+<div class="hero"><div class="wrap">
+  <span class="tag">창고에서 직접 포장·출고하는 라이브 판매자용</span>
+  <h1>라이브 끝나고 댓글 주문 정리·출고 준비, 아직 손으로 하세요?</h1>
+  <p class="sub">댓글을 붙여 넣으면 주문표와 상품별 출고 수량표가 바로 나옵니다.</p>
+
+  <div class="ba" aria-label="변환 전 댓글 5줄과 변환 후 출고 수량표 예시">
+    <div>
+      <div class="cap">변환 전 · 라이브 댓글(대화)</div>
+      <div class="before">
+        <span>콩이맘 : 들기름 두 병이요~</span>
+        <span>라온 : 저도 들기름 하나 주세요!!</span>
+        <span>하루하루 : 프라이팬 28 하나 담아주세요</span>
+        <span>봄날 : 수세미 세트 3개 할게요 ㅎㅎ</span>
+        <span>초코 : 언니 들기름 1병 추가요</span>
+      </div>
+    </div>
+    <div class="arrow">→</div>
+    <div>
+      <div class="cap">변환 후 · 출고 수량</div>
+      <table>
+        <tr><th>상품·옵션</th><th>수량</th></tr>
+        <tr><td>들기름 350ml</td><td class="n">4</td></tr>
+        <tr><td>프라이팬 28cm</td><td class="n">1</td></tr>
+        <tr><td>수세미 세트</td><td class="n">3</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <a class="btn block" href="#try" id="heroBtn">내 댓글로 해 보기</a>
+  <p class="note">설치·가입 없이 이 화면에서 바로 됩니다</p>
+</div></div>
+
+<!-- [2] 체험 -->
+<section id="try"><div class="wrap">
+  <h2>댓글을 붙여 넣고 「정리하기」</h2>
+  <p class="desc">예시 댓글이 미리 들어 있습니다. 지우고 내 라이브 댓글을 붙여 넣어 보세요.</p>
+  <label class="plab" for="prods">오늘 판매 상품 <small>(쉼표로 구분, 댓글과 맞춰 읽는 기준)</small></label>
+  <input id="prods" type="text" spellcheck="false" aria-label="오늘 판매 상품">
+  <p id="prodHint" class="hint" style="display:none">⚠ 내 댓글을 넣으셨네요. 위 「오늘 판매 상품」도 <b>내 라이브 상품 이름</b>으로 바꿔 주세요(예: 양말, 니트 가디건). 상품 이름을 기준으로 댓글을 읽습니다.</p>
+  <textarea id="src" spellcheck="false" aria-label="라이브 댓글 입력"></textarea>
+  <div class="row">
+    <button class="btn" type="button" id="convertBtn">정리하기</button>
+    <button class="btn ghost" type="button" id="clearBtn">지우고 내 댓글 넣기</button>
+  </div>
+  <div class="local">🔒 <span>입력한 댓글은 <b>이 브라우저 안에서만</b> 처리합니다. 서버로 보내거나 저장하지 않습니다.</span></div>
+  <p class="rule">대화처럼 쓴 댓글도 읽습니다(예: 「들기름 두 병이요~」 「저도 하나 주세요」 「1병이랑 밀폐용기 두 개」). 판매 상품 이름과 맞춰 상품을 찾고, 수량이 없으면 1개로 봅니다. 잡담은 빼고, 질문이나 애매한 줄은 「확인 필요」로 따로 보여 드립니다.</p>
+
+  <div id="result">
+    <div class="res-head" id="resHead"></div>
+    <div id="zeroBox" class="zero" style="display:none"></div>
+    <div id="tables">
+      <h3>① 주문표</h3>
+      <div class="tbl"><table id="orderTbl"></table></div>
+      <h3>② 상품·옵션별 출고 수량 (창고에서 꺼낼 수량)</h3>
+      <div class="tbl"><table id="pickTbl"></table></div>
+      <div class="row"><button class="btn" type="button" id="dlBtn">엑셀로 받기</button></div>
+    </div>
+    <div class="fail" id="failBox" style="display:none"></div>
+    <div class="row" style="margin-top:16px"><a class="btn ghost block" href="#apply" data-cta="after-demo">매번 쓰고 싶다면, 베타 무료 시범 신청</a></div>
+  </div>
+</div></section>
+
+<!-- [3] 신청 -->
+<section id="apply"><div class="wrap">
+  <h2>매번 쓰고 싶다면, 베타 무료 시범 신청</h2>
+  <p class="desc">라이브 판매자분들의 실제 사용 방식을 듣고 기능을 다듬고 있습니다. 1분이면 끝납니다.</p>
+
+  <form id="leadForm" novalidate>
+    <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
+
+    <div class="f">
+      <span class="lab">재고를 직접 보유하고 라이브 판매·출고를 직접 하시나요?</span>
+      <div class="yn">
+        <label><input type="radio" name="stock" value="예" required> 예</label>
+        <label><input type="radio" name="stock" value="아니오"> 아니오</label>
+      </div>
+    </div>
+
+    <div class="f"><label for="cat">판매 분류</label>
+      <select id="cat" name="category" required>
+        <option value="">선택</option><option>식품</option><option>건강식품</option><option>주방</option><option>생활</option><option>자체 제작 의류</option><option>기타</option>
+      </select></div>
+
+    <div class="grid2">
+      <div class="f"><label for="liveCnt">주당 라이브 횟수</label>
+        <select id="liveCnt" name="liveCount" required>
+          <option value="">선택</option><option>1회 이하</option><option>2~3회</option><option>4~6회</option><option>매일</option>
+        </select></div>
+      <div class="f"><label for="ordCnt">라이브 1회 주문 수</label>
+        <select id="ordCnt" name="ordersPerLive" required>
+          <option value="">선택</option><option>30건 미만</option><option>30~100건</option><option>100~300건</option><option>300건 이상</option>
+        </select></div>
+    </div>
+
+    <div class="f"><label for="mins">라이브 1회 뒤 정리·출고 준비에 쓰는 시간</label>
+      <select id="mins" name="prepMinutes" required>
+        <option value="">선택</option><option>30분 미만</option><option>30분~1시간</option><option>1~2시간</option><option>2시간 이상</option>
+      </select></div>
+
+    <div class="f"><label for="contact">연락 방법 <span class="opt">(이메일 또는 카카오톡 ID)</span></label>
+      <input id="contact" name="contact" required maxlength="120" autocomplete="email" placeholder="예) name@example.com"></div>
+
+    <div class="consent">
+      <label><input type="checkbox" id="agree" required> <span>[필수] 개인정보 수집·이용에 동의합니다.</span></label>
+      <table>
+        <tr><td>수집 항목</td><td>연락 방법(이메일 또는 카카오톡 ID), 재고 보유·판매 분류·라이브 횟수·주문 수·준비 시간</td></tr>
+        <tr><td>이용 목적</td><td>베타 시범 사용 안내 연락, 서비스 개선</td></tr>
+        <tr><td>보유 기간</td><td>수집일로부터 1년 또는 동의 철회 시까지 (철회 즉시 파기)</td></tr>
+      </table>
+      <p style="margin-top:6px">동의하지 않으실 수 있으나, 이 경우 시범 사용 안내를 드릴 수 없습니다.</p>
+    </div>
+    <p class="err" id="formErr"></p>
+    <button class="btn block" type="submit">베타 무료 시범 신청하기</button>
+  </form>
+
+  <div class="done" id="leadDone">
+    <div class="big">📦</div>
+    <h3>신청이 접수되었습니다</h3>
+    <p>남겨 주신 연락처로 시범 사용 안내를 드리겠습니다.</p>
+  </div>
+</div></section>
+</main>
+
+<!-- [4] 아래 -->
+<footer><div class="wrap">
+  <p><b>AiUM</b> · 베타 단계 서비스이며 결제는 없습니다.<span id="contactLine"></span></p>
+  <p>개인정보 보호책임자: 이미희 · 수집한 개인정보는 시범 사용 안내와 서비스 개선에만 사용하며 제3자에게 제공하지 않습니다. 삭제를 원하시면 문의 이메일로 알려 주세요.</p>
+  <p>이 사이트는 방문 통계(Google Analytics)를 수집합니다. 체험 칸에 입력한 댓글과 신청서 내용은 통계로 보내지 않습니다.</p>
+</div></footer>
+
+<div class="mcta" id="mcta"><a class="btn block" href="#apply" data-cta="mobile-bar">베타 무료 시범 신청</a></div>
+
+<script>
+/* ===== 설정 (index.html과 같은 저장 경로) ===== */
+const CONFIG = {
+  ENDPOINT: "https://script.google.com/macros/s/AKfycby1nkg0_gcxaD3Gc1Ee5OhpOvXQQz-O7A8ki3W-yuorXuzk0-bRKZ4HPzzOED6e2QA/exec",
+  CONTACT_EMAIL: "oikodomeo202@gmail.com"
+};
+/* ============================================= */
+
+// 가상 예시 댓글 (실제 판매자·고객 아님). 마지막 줄은 일부러 읽을 수 없는 잡담
+const SAMPLE = [
+  "콩이맘 : 들기름 두 병이요~",
+  "라온 : 저도 들기름 하나 주세요!!",
+  "하루하루 : 프라이팬 28 하나 담아주세요",
+  "봄날엄마 : 수세미 세트 3개 할게요 ㅎㅎ",
+  "초코아빠 : 언니 들기름 1병이랑 밀폐용기 두 개 추가요",
+  "도토리 : 밀폐용기 하나요",
+  "콩이맘 : 아 수세미도 하나 주세요",
+  "라온 : 와 오늘 구성 좋네요 ㅎㅎ",
+  "봄날엄마 : 들기름 작은 것도 있나요?"
+].join("\n");
+const SAMPLE_PRODS = "들기름 350ml, 무쇠 프라이팬 28cm, 수세미 세트, 밀폐용기";
+
+const store = {
+  get(k){ try{ return sessionStorage.getItem(k) }catch(e){ return null } },
+  set(k,v){ try{ sessionStorage.setItem(k,v) }catch(e){} }
+};
+const sid = store.get("aium_sid") || (Date.now().toString(36) + Math.random().toString(36).slice(2,8));
+store.set("aium_sid", sid);
+const qs = new URLSearchParams(location.search);
+const utm = {
+  utm_source: qs.get("utm_source") || store.get("utm_source") || "",
+  utm_medium: qs.get("utm_medium") || store.get("utm_medium") || "",
+  utm_campaign: qs.get("utm_campaign") || store.get("utm_campaign") || "",
+  utm_content: qs.get("utm_content") || store.get("utm_content") || ""
+};
+Object.entries(utm).forEach(([k,v]) => v && store.set(k,v));
+
+// 시트 기록(방문·신청만). 체험 입력 내용은 보내지 않는다
+function send(type, data){
+  const body = Object.assign({ type, sid, page: location.pathname, referrer: document.referrer || "", device: innerWidth < 820 ? "mobile" : "desktop" }, utm, data || {});
+  if(!CONFIG.ENDPOINT){ console.log("[미리보기] 저장 안 함:", body); return Promise.resolve(); }
+  return fetch(CONFIG.ENDPOINT, { method:"POST", mode:"no-cors", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(body) }).catch(()=>{});
+}
+// GA4 이벤트: 숫자·구분값만 붙인다(입력한 글자는 보내지 않음)
+function ga(name, params){
+  try{ if(window.gtag) gtag("event", name, Object.assign({ page_variant: "live_order", campaign_tag: utm.utm_campaign || "(none)", ad_tag: utm.utm_content || "(none)" }, params || {})); }catch(e){}
+}
+
+if(CONFIG.CONTACT_EMAIL){
+  document.getElementById("contactLine").innerHTML = ' 문의: <a href="mailto:' + CONFIG.CONTACT_EMAIL + '">' + CONFIG.CONTACT_EMAIL + '</a>';
+}
+if(!store.get("lo_visit")){ store.set("lo_visit","1"); send("visit", { persona: "cplan" }); }
+
+/* ---------- 댓글 → 주문 변환 (단순 규칙) ---------- */
+const OPT_WORDS = ["대","중","소","특대","S","M","L","XL","XXL","FREE","프리","화이트","블랙","그레이","베이지","아이보리","네이비","핑크","블루","그린","레드","옐로우","브라운","실버","골드"];
+const UNIT_RE = /^\d+(?:\.\d+)?(ml|mL|ML|l|L|리터|g|G|kg|KG|Kg|cm|CM|mm|호|인용|입|구|매|팩|봉|병|캔|매입|p|P)$/;
+const QTY_RES = [
+  /^(\d{1,3})\s*(개|세트|set|SET|봉|병|팩|박스|box|통|묶음|ea|EA)$/,
+  /^[xX×*](\d{1,3})$/,
+  /^(\d{1,3})[xX×]$/,
+  /^(\d{1,3})$/
+];
+function readQty(t){
+  for(const re of QTY_RES){ const m = t.match(re); if(m) return parseInt(m[1],10); }
+  return null;
+}
+function parseLine(raw){
+  let line = raw.replace(/[​\t]/g," ").replace(/\s+/g," ").trim();
+  if(!line) return null;
+  // 「닉네임: 내용」「[닉네임] 내용」「닉네임) 내용」 형태 지원
+  let nick = "", rest = line;
+  let m = line.match(/^\[([^\]]{1,20})\]\s*(.+)$/) || line.match(/^([^\s:：)]{1,20})\s*[:：)]\s*(.+)$/);
+  if(m){ nick = m[1].trim(); rest = m[2].trim(); }
+  else { const sp = line.indexOf(" "); if(sp < 0) return { ok:false, raw }; nick = line.slice(0,sp); rest = line.slice(sp+1); }
+  // 「2 개」처럼 띄어 쓴 수량 붙이기, 「x 2」 붙이기
+  rest = rest.replace(/(\d)\s+(개|세트|봉|병|팩|박스|통|묶음)(?=\s|$)/g,"$1$2").replace(/(^|\s)([xX×*])\s+(\d)/g,"$1$2$3");
+  const toks = rest.split(" ").filter(Boolean);
+  let qty = null, qi = -1;
+  for(let i = toks.length - 1; i >= 0; i--){ const q = readQty(toks[i]); if(q !== null && q > 0 && q <= 999){ qty = q; qi = i; break; } }
+  if(qty === null) return { ok:false, raw };
+  const left = toks.filter((_,i) => i !== qi && i < qi).concat(toks.filter((_,i) => i > qi));
+  const prod = [], opt = [];
+  for(let i = 0; i < left.length; i++){
+    const t = left[i];
+    if(/^사이즈$|^색상$|^컬러$|^옵션$/.test(t) && left[i+1]){ opt.push(left[i+1]); i++; continue; }
+    if(/^\(.+\)$/.test(t)){ opt.push(t.slice(1,-1)); continue; }
+    if(UNIT_RE.test(t) || OPT_WORDS.includes(t) || OPT_WORDS.includes(t.toUpperCase())){ opt.push(t); continue; }
+    prod.push(t);
+  }
+  if(!prod.length) return { ok:false, raw };
+  return { ok:true, nick, product: prod.join(" "), option: opt.join(" ") || "-", qty };
+}
+/* ---------- 대화체 댓글 읽기 (판매 상품 목록 기준) ---------- */
+const KNUM = {"한":1,"하나":1,"두":2,"둘":2,"세":3,"셋":3,"석":3,"네":4,"넷":4,"다섯":5,"여섯":6,"일곱":7,"여덟":8,"아홉":9,"열":10};
+const UNIT = "개|병|세트|set|SET|팩|봉|통|박스|묶음|ea|EA|구";
+const INTENT_RE = /(주세요|줘요|주셔요|할게요|할께요|할래요|이요|살게요|구매|주문|추가|담아|예약|찜|부탁|이에요|할께)/;
+const KNUM_RE = new RegExp("(?:^|\\s)(" + Object.keys(KNUM).sort((a,b) => b.length - a.length).join("|") + ")\\s*(?:" + UNIT + ")?(?=\\s|요|이요|만|씩|도|[~!.,]|$)");
+const QTY_UNIT_RE = new RegExp("(\\d{1,3})\\s*(?:" + UNIT + ")");
+const norm = t => t.replace(/\s+/g, "").toLowerCase();
+function prodKeys(name){
+  return name.split(/\s+/).filter(Boolean).map(w => {
+    const n = norm(w);
+    return { w, n, num: /^\d/.test(w), base: n.replace(/(ml|l|g|kg|cm|mm|리터)$/i, "") };
+  });
+}
+function matchProduct(seg, prods){
+  const ns = norm(seg);
+  let best = null;
+  prods.forEach(p => {
+    let score = 0, word = 0;
+    p.keys.forEach(k => {
+      if(k.num){
+        if(ns.includes(k.n) || (k.base && new RegExp("(^|\\D)" + k.base + "(\\D|$)").test(ns))) score += 1;
+      } else if(k.n.length >= 2 && ns.includes(k.n)){ score += k.n.length; word++; }
+    });
+    if(word > 0 && (!best || score > best.score)) best = { p, score };
+  });
+  return best ? best.p : null;
+}
+function readQtyChat(seg, prod){
+  let t = " " + seg + " ";
+  // 상품 규격 숫자(350ml, 28cm, 28)는 수량에서 뺀다
+  prod.keys.forEach(k => {
+    if(k.num){
+      t = t.split(k.w).join(" ");
+      if(k.base) t = t.replace(new RegExp("(^|\\D)" + k.base + "(?=\\D)"), "$1 ");
+    }
+  });
+  let m = t.match(QTY_UNIT_RE) || t.match(/[xX×*]\s*(\d{1,3})/) || t.match(/(\d{1,3})\s*[xX×]/);
+  if(m) return parseInt(m[1], 10);
+  m = t.match(KNUM_RE);
+  if(m) return KNUM[m[1]];
+  m = t.match(/(?:^|\s)(\d{1,2})(?=\s|요|[~!.,]|$)/);
+  if(m) return parseInt(m[1], 10);
+  return null;
+}
+const looksOrder = t => /\d/.test(t) || INTENT_RE.test(t) || KNUM_RE.test(" " + t + " ");
+function parseChat(raw, prods){
+  const line = raw.replace(/[​\t]/g, " ").replace(/\s+/g, " ").trim();
+  if(!line) return [];
+  let nick = "", rest = line;
+  const m = line.match(/^\[([^\]]{1,20})\]\s*(.+)$/) || line.match(/^([^\s:：)]{1,20})\s*[:：)]\s*(.+)$/);
+  if(m){ nick = m[1].trim(); rest = m[2].trim(); }
+  else { const sp = line.indexOf(" "); if(sp > 0){ nick = line.slice(0, sp); rest = line.slice(sp + 1); } }
+  // 질문은 주문이 아님 → 확인 필요
+  if(/[?？]/.test(rest)) return matchProduct(rest, prods) ? [{ ok:false, raw }] : [{ ok:false, raw, chat:true }];
+  const segs = rest.split(/\s*(?:이랑|랑|하고|그리고|,|\+|&)\s*/).filter(Boolean);
+  const out = [];
+  segs.forEach(seg => {
+    const p = matchProduct(seg, prods);
+    if(!p){ if(looksOrder(seg)) out.push({ ok:false, raw }); return; }
+    let q = readQtyChat(seg, p);
+    if(q === null && INTENT_RE.test(rest)) q = 1;
+    if(q === null || q <= 0 || q > 999){ out.push({ ok:false, raw }); return; }
+    out.push({ ok:true, nick, product: p.name, option: "-", qty: q });
+  });
+  if(!out.length) return [{ ok:false, raw, chat: !looksOrder(rest) }];
+  // 한 줄에서 실패가 섞이면 실패 1개만 남김
+  const oks = out.filter(o => o.ok);
+  return oks.length ? (oks.length < out.length ? oks.concat([{ ok:false, raw }]) : oks) : [{ ok:false, raw }];
+  return out;
+}
+function convert(text){
+  const lines = text.split(/\r?\n/);
+  const orders = [], fails = [];
+  const plist = (document.getElementById("prods").value || "").split(/[,，\n]/).map(x => x.trim()).filter(Boolean).map(name => ({ name, keys: prodKeys(name) }));
+  if(plist.length){
+    lines.forEach(l => parseChat(l, plist).forEach(r => { if(r.ok) orders.push(r); else if(!r.chat) fails.push(r); }));
+  } else {
+    lines.forEach(l => { const r = parseLine(l); if(!r) return; (r.ok ? orders : fails).push(r); });
+  }
+  const pick = new Map();
+  orders.forEach(o => { const k = o.product + "\u0001" + o.option; pick.set(k, (pick.get(k) || 0) + o.qty); });
+  const picks = [...pick.entries()].map(([k,q]) => { const [p,o] = k.split("\u0001"); return { product:p, option:o, qty:q }; })
+    .sort((a,b) => a.product.localeCompare(b.product,"ko") || a.option.localeCompare(b.option,"ko"));
+  return { orders, fails, picks };
+}
+
+/* ---------- 화면 ---------- */
+const src = document.getElementById("src");
+src.value = SAMPLE;
+document.getElementById("prods").value = SAMPLE_PRODS;
+let last = null;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+// 직접 입력 시작: 예시와 달라지는 첫 순간 1회
+let pasted = false;
+function prodHint(){
+  const own = src.value.trim() && src.value.trim() !== SAMPLE.trim();
+  const same = document.getElementById("prods").value.trim() === SAMPLE_PRODS;
+  document.getElementById("prodHint").style.display = (own && same) ? "block" : "none";
+}
+function markPaste(){ prodHint(); if(pasted) return; if(src.value.trim() !== SAMPLE.trim()){ pasted = true; ga("demo_paste"); } }
+document.getElementById("prods").addEventListener("input", prodHint);
+src.addEventListener("input", markPaste);
+src.addEventListener("paste", () => setTimeout(markPaste, 0));
+document.getElementById("clearBtn").addEventListener("click", () => { src.value = ""; src.focus(); });
+
+document.getElementById("convertBtn").addEventListener("click", () => {
+  const text = src.value;
+  const isSample = text.trim() === SAMPLE.trim();
+  const r = convert(text);
+  last = r;
+  render(r);
+  const n = r.orders.length, f = r.fails.length;
+  if(isSample){
+    ga("demo_sample", { rows: n });
+  } else if(n > 0){
+    if(!store.get("lo_convert_own")){ store.set("lo_convert_own","1"); ga("demo_convert_own", { rows: n, unread: f }); }
+  }
+  if(n === 0 && text.trim()) ga("demo_fail", { unread: f, own: isSample ? "N" : "Y" });
+});
+
+function render(r){
+  const box = document.getElementById("result"); box.style.display = "block";
+  const n = r.orders.length, f = r.fails.length, total = r.picks.reduce((a,b) => a + b.qty, 0);
+  document.getElementById("resHead").innerHTML =
+    `<span class="pill ok">주문 ${n}건</span><span class="pill ok">출고 ${r.picks.length}종 · 총 ${total}개</span>` + (f ? `<span class="pill bad">확인 필요 ${f}줄</span>` : "");
+  const zero = document.getElementById("zeroBox"), tables = document.getElementById("tables");
+  if(n === 0){
+    zero.style.display = "block"; tables.style.display = "none";
+    zero.innerHTML = "주문으로 읽은 줄이 없습니다. 위 「오늘 판매 상품」에 댓글 속 상품 이름(예: 들기름, 수세미)이 들어 있는지 확인해 주세요.";
+  } else {
+    zero.style.display = "none"; tables.style.display = "block";
+    document.getElementById("orderTbl").innerHTML = "<tr><th>#</th><th>닉네임</th><th>상품</th><th>옵션</th><th>수량</th></tr>" +
+      r.orders.map((o,i) => `<tr><td>${i+1}</td><td>${esc(o.nick)}</td><td>${esc(o.product)}</td><td>${esc(o.option)}</td><td class="n">${o.qty}</td></tr>`).join("");
+    document.getElementById("pickTbl").innerHTML = "<tr><th>상품</th><th>옵션</th><th>꺼낼 수량</th></tr>" +
+      r.picks.map(p => `<tr><td>${esc(p.product)}</td><td>${esc(p.option)}</td><td class="n">${p.qty}</td></tr>`).join("") +
+      `<tr class="total"><td colspan="2">합계</td><td class="n">${total}</td></tr>`;
+  }
+  const fb = document.getElementById("failBox");
+  if(f){ fb.style.display = "block"; fb.innerHTML = `<b>확인 필요 ${f}줄</b> · 주문으로 읽지 못했습니다(문의·잡담이거나 수량이 없음)<ul>` + r.fails.slice(0,20).map(x => `<li>${esc(x.raw)}</li>`).join("") + "</ul>"; }
+  else fb.style.display = "none";
+  box.scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+// 엑셀로 받기: 브라우저 안에서 CSV(엑셀에서 열림) 생성
+document.getElementById("dlBtn").addEventListener("click", () => {
+  if(!last || !last.orders.length) return;
+  const q = v => { let s = String(v); if(/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g,'""') + '"'; };
+  const rows = [["① 주문표"],["#","닉네임","상품","옵션","수량"]]
+    .concat(last.orders.map((o,i) => [i+1,o.nick,o.product,o.option,o.qty]))
+    .concat([[],["② 상품·옵션별 출고 수량"],["상품","옵션","꺼낼 수량"]])
+    .concat(last.picks.map(p => [p.product,p.option,p.qty]))
+    .concat([["합계","",last.picks.reduce((a,b) => a + b.qty, 0)]]);
+  if(last.fails.length) rows.push([], ["확인 필요(읽지 못한 줄)"], ...last.fails.map(x => [x.raw]));
+  const csv = "﻿" + rows.map(r => r.map(q).join(",")).join("\r\n");
+  const d = new Date(), ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,"0") + String(d.getDate()).padStart(2,"0");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" }));
+  a.download = `주문정리_${ymd}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  ga("demo_download", { rows: last.orders.length });
+});
+
+/* ---------- 신청 ---------- */
+document.querySelectorAll('a[href="#apply"]').forEach(a => a.addEventListener("click", () => { ga("cta_apply", { position: a.dataset.cta || "link" }); send("cta", { cta: "live-order-" + (a.dataset.cta || "link") }); }));
+document.getElementById("heroBtn").addEventListener("click", () => ga("hero_try"));
+
+const lf = document.getElementById("leadForm");
+let applyFocused = false;
+lf.addEventListener("focusin", () => { if(applyFocused) return; applyFocused = true; ga("form_start"); });
+lf.addEventListener("submit", async e => {
+  e.preventDefault();
+  const err = document.getElementById("formErr");
+  const fd = Object.fromEntries(new FormData(lf));
+  if(fd.website) return;
+  const need = [["stock","재고 보유 여부를 골라 주세요."],["category","판매 분류를 골라 주세요."],["liveCount","주당 라이브 횟수를 골라 주세요."],["ordersPerLive","라이브 1회 주문 수를 골라 주세요."],["prepMinutes","정리·출고 준비 시간을 골라 주세요."],["contact","연락 방법을 적어 주세요."]];
+  const miss = need.find(([k]) => !(fd[k] || "").trim());
+  if(miss){ err.textContent = miss[1]; err.style.display = "block"; return; }
+  if(!document.getElementById("agree").checked){ err.textContent = "개인정보 수집·이용에 동의해 주세요."; err.style.display = "block"; return; }
+  err.style.display = "none";
+  const btn = lf.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "보내는 중…";
+  const isTest = fd.contact.trim() === "테스트";
+  // 기존 Apps Script 「신청」 탭 칸에 맞춰 보냄(스크립트 재배포 없이 저장)
+  await send("lead", {
+    brand: isTest ? "[C플랜 테스트]" : "[C플랜] 라이브 판매자",
+    name: "", phone: "",
+    email: fd.contact.trim(),
+    category: fd.category,
+    sellerSize: fd.ordersPerLive,
+    liveRequired: fd.liveCount,
+    currentMethod: fd.prepMinutes,
+    message: `재고 보유: ${fd.stock} / 주당 라이브: ${fd.liveCount} / 1회 주문: ${fd.ordersPerLive} / 준비 시간: ${fd.prepMinutes}`,
+    marketingConsent: "N",
+    role: "재고 보유 " + fd.stock,
+    frequency: fd.liveCount,
+    interviewOk: "N",
+    companySize: "",
+    persona: "cplan"
+  });
+  ga("generate_lead", { stock: fd.stock === "예" ? "yes" : "no", category: fd.category, test: isTest ? "Y" : "N" });
+  lf.style.display = "none"; document.getElementById("leadDone").style.display = "block";
+});
+
+/* ---------- 체류 60초(화면을 보고 있는 시간 기준, 1회) ---------- */
+(function(){
+  let seen = 0, t0 = document.visibilityState === "visible" ? Date.now() : 0, sent = false;
+  const tick = () => {
+    if(sent) return;
+    const now = Date.now(); const cur = seen + (t0 ? now - t0 : 0);
+    if(cur >= 60000){ sent = true; ga("engaged_60s"); }
+  };
+  document.addEventListener("visibilitychange", () => {
+    if(document.visibilityState === "visible"){ t0 = Date.now(); } else if(t0){ seen += Date.now() - t0; t0 = 0; }
+  });
+  setInterval(tick, 5000);
+})();
+
+/* ---------- 모바일 하단 신청 버튼: 체험 칸을 지나면 표시 ---------- */
+(function(){
+  const bar = document.getElementById("mcta"), apply = document.getElementById("apply"), tryS = document.getElementById("try");
+  if(!("IntersectionObserver" in window)) return;
+  let pastTry = false, onApply = false;
+  const upd = () => bar.classList.toggle("on", pastTry && !onApply);
+  new IntersectionObserver(es => { es.forEach(x => { if(x.target === apply) onApply = x.isIntersecting; if(x.target === tryS) pastTry = x.boundingClientRect.top < 0 || x.isIntersecting; }); upd(); }, { threshold: 0 }).observe(apply);
+  new IntersectionObserver(es => { pastTry = es[0].boundingClientRect.top < innerHeight * 0.2; upd(); }, { threshold: [0, .25, .5, 1] }).observe(tryS);
+})();
+</script>
+</body>
+</html>

@@ -363,6 +363,24 @@ function prodKeys(name){
     return { w, n, num: /^\d/.test(w), base: n.replace(/(ml|l|g|kg|cm|mm|리터)$/i, "") };
   });
 }
+// 한 글자만 다른 단어도 같은 상품으로 본다(예: 패팅 ↔ 패딩). 3글자 이상은 한 글자 빠짐도 허용
+function near1(a, b){
+  if(a === b) return true;
+  if(a.length === b.length){ let d = 0; for(let i = 0; i < a.length; i++) if(a[i] !== b[i] && ++d > 1) return false; return d === 1; }
+  if(Math.min(a.length, b.length) < 3 || Math.abs(a.length - b.length) !== 1) return false;
+  const [x, y] = a.length > b.length ? [a, b] : [b, a];
+  for(let i = 0; i < x.length; i++) if(x.slice(0, i) + x.slice(i + 1) === y) return true;
+  return false;
+}
+function fuzzyIn(key, seg){
+  return seg.split(/\s+/).some(t => {
+    const w = norm(t).replace(/(도|은|는|이|가|을|를|요|이요|으로|로)$/, "");
+    if(w.length < 2) return false;
+    if(near1(key, w)) return true;
+    // 붙여 쓴 경우: 단어 앞부분이 상품명과 한 글자 차이
+    return w.length > key.length && near1(key, w.slice(0, key.length));
+  });
+}
 function matchProduct(seg, prods){
   const ns = norm(seg);
   let best = null;
@@ -371,7 +389,7 @@ function matchProduct(seg, prods){
     p.keys.forEach(k => {
       if(k.num){
         if(ns.includes(k.n) || (k.base && new RegExp("(^|\\D)" + k.base + "(\\D|$)").test(ns))) score += 1;
-      } else if(k.n.length >= 2 && ns.includes(k.n)){ score += k.n.length; word++; }
+      } else if(k.n.length >= 2 && (ns.includes(k.n) || fuzzyIn(k.n, seg))){ score += k.n.length; word++; }
     });
     if(word > 0 && (!best || score > best.score)) best = { p, score };
   });
@@ -401,7 +419,10 @@ function parseChat(raw, prods){
   let nick = "", rest = line;
   const m = line.match(/^\[([^\]]{1,20})\]\s*(.+)$/) || line.match(/^([^\s:：)]{1,20})\s*[:：)]\s*(.+)$/);
   if(m){ nick = m[1].trim(); rest = m[2].trim(); }
-  else { const sp = line.indexOf(" "); if(sp > 0){ nick = line.slice(0, sp); rest = line.slice(sp + 1); } }
+  else {
+    const sp = line.indexOf(" ");
+    if(sp > 0 && matchProduct(line.slice(sp + 1), prods) && !matchProduct(line.slice(0, sp), prods)){ nick = line.slice(0, sp); rest = line.slice(sp + 1); }
+  }
   // 질문은 주문이 아님 → 확인 필요
   if(/[?？]/.test(rest)) return matchProduct(rest, prods) ? [{ ok:false, raw }] : [{ ok:false, raw, chat:true }];
   const segs = rest.split(/\s*(?:이랑|랑|하고|그리고|,|\+|&)\s*/).filter(Boolean);
@@ -412,7 +433,8 @@ function parseChat(raw, prods){
     let q = readQtyChat(seg, p);
     if(q === null && INTENT_RE.test(rest)) q = 1;
     if(q === null || q <= 0 || q > 999){ out.push({ ok:false, raw }); return; }
-    out.push({ ok:true, nick, product: p.name, option: "-", qty: q });
+    const opts = seg.split(/\s+/).map(t => t.replace(/(으로|로|요|이요)$/, "")).filter(t => OPT_WORDS.includes(t) || OPT_WORDS.includes(t.toUpperCase()) || /^(사이즈)?\s*(\d{2,3}|S|M|L|XL|XXL|FREE|프리)$/i.test(t) && !p.keys.some(k => k.n === norm(t) || k.base === norm(t)));
+    out.push({ ok:true, nick, product: p.name, option: opts.length ? opts.join(" ") : "-", qty: q });
   });
   if(!out.length) return [{ ok:false, raw, chat: !looksOrder(rest) }];
   // 한 줄에서 실패가 섞이면 실패 1개만 남김

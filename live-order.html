@@ -355,7 +355,19 @@ const KNUM = {"한":1,"하나":1,"두":2,"둘":2,"세":3,"셋":3,"석":3,"네":4
 const UNIT = "개|병|세트|set|SET|팩|봉|통|박스|묶음|ea|EA|구";
 const INTENT_RE = /(주세요|줘요|주셔요|할게요|할께요|할래요|이요|살게요|구매|주문|추가|담아|예약|찜|부탁|이에요|할께)/;
 const KNUM_RE = new RegExp("(?:^|\\s)(" + Object.keys(KNUM).sort((a,b) => b.length - a.length).join("|") + ")\\s*(?:" + UNIT + ")?(?=\\s|요|이요|만|씩|도|[~!.,]|$)");
-const QTY_UNIT_RE = new RegExp("(\\d{1,3})\\s*(?:" + UNIT + ")");
+// 앞에 숫자·소수점·쉼표가 붙은 숫자는 수량으로 읽지 않는다(1234개 → 234개 방지)
+const QTY_UNIT_RE = new RegExp("(?:^|[^\\d.,])(\\d{1,3})\\s*(?:" + UNIT + ")");
+// 상품 이름을 정규식에 넣을 때 괄호·점 같은 기호를 글자 그대로 본다
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const OPT_ALT = OPT_WORDS.slice().sort((a,b) => b.length - a.length).map(reEsc).join("|");
+// 옵션+수량 짝: 「블랙1」「베이지 2개」
+const PAIR_RE = new RegExp("(^|\\s)(" + OPT_ALT + ")\\s*(\\d{1,3})\\s*(" + UNIT + ")?(?=\\s|요|씩|[~!.,]|$)", "gi");
+const OPT_QTY_RE = new RegExp("^(" + OPT_ALT + ")\\d{1,3}(?:" + UNIT + ")?$", "i");
+const COLOR_WORDS = OPT_WORDS.filter(w => w.length >= 2 && !/^[A-Z]+$/.test(w));
+// 취소·변경·추가 댓글은 새 주문으로 더하지 않고 앞 주문에 반영한다
+const CANCEL_RE = /(취소|빼\s*주|빼\s*줘|빼요|빼고|안\s*살|안\s*할|못\s*살)/;
+const CHANGE_RE = /(말고|대신|바꿔|바꾸|변경|교환)/;
+const MORE_RE = /(?:^|\s)(?:(\d{1,2}|한|하나|두|둘|세|셋)\s*개?\s*)?더(?=\s|요|주|할|살|$)/;
 const norm = t => t.replace(/\s+/g, "").toLowerCase();
 function prodKeys(name){
   return name.split(/\s+/).filter(Boolean).map(w => {
@@ -381,36 +393,85 @@ function fuzzyIn(key, seg){
     return w.length > key.length && near1(key, w.slice(0, key.length));
   });
 }
+// 정확히 들어 있는 단어를 오타 허용 일치보다 조금 높게 친다(긴 이름의 오타 일치는 짧은 이름의 정확 일치보다 높음). 점수가 같은 상품이 둘이면 고르지 않고 확인 필요로
 function matchProduct(seg, prods){
   const ns = norm(seg);
-  let best = null;
+  let best = null, tie = false;
   prods.forEach(p => {
     let score = 0, word = 0;
     p.keys.forEach(k => {
       if(k.num){
-        if(ns.includes(k.n) || (k.base && new RegExp("(^|\\D)" + k.base + "(\\D|$)").test(ns))) score += 1;
-      } else if(k.n.length >= 2 && (ns.includes(k.n) || fuzzyIn(k.n, seg))){ score += k.n.length; word++; }
+        if(ns.includes(k.n) || (k.base && new RegExp("(^|\\D)" + reEsc(k.base) + "(\\D|$)").test(ns))) score += 1;
+      } else if(k.n.length >= 2){
+        if(ns.includes(k.n)){ score += k.n.length * 2; word++; }
+        else if(fuzzyIn(k.n, seg)){ score += k.n.length * 2 - 1; word++; }
+      }
     });
-    if(word > 0 && (!best || score > best.score)) best = { p, score };
+    if(word === 0) return;
+    if(!best || score > best.score){ best = { p, score }; tie = false; }
+    else if(score === best.score) tie = true;
   });
-  return best ? best.p : null;
+  return best && !tie ? best.p : null;
+}
+// 수량이 아닌 숫자(전화번호·가격·시각)를 지운다
+function stripNoise(t){
+  return t.replace(/\d{2,4}[-.\s]\d{3,4}[-.\s]\d{4}/g, " ")
+    .replace(/\d[\d,]*\s*(?:만\s*|천\s*)?원/g, " ")
+    .replace(/\d{1,2}\s*시(?:\s*\d{1,2}\s*분)?(?=\s|에|까지|부터|쯤|반|[~!.,]|$)/g, " ")
+    .replace(/\d{1,2}\s*분(?=\s|에|뒤|후|만|[~!.,]|$)/g, " ");
 }
 function readQtyChat(seg, prod){
-  let t = " " + seg + " ";
+  let t = " " + stripNoise(seg) + " ";
   // 상품 규격 숫자(350ml, 28cm, 28)는 수량에서 뺀다
   prod.keys.forEach(k => {
     if(k.num){
       t = t.split(k.w).join(" ");
-      if(k.base) t = t.replace(new RegExp("(^|\\D)" + k.base + "(?=\\D)"), "$1 ");
+      if(k.base) t = t.replace(new RegExp("(^|\\D)" + reEsc(k.base) + "(?=\\D)"), "$1 ");
     }
   });
-  let m = t.match(QTY_UNIT_RE) || t.match(/[xX×*]\s*(\d{1,3})/) || t.match(/(\d{1,3})\s*[xX×]/);
+  // 소수(2.5개)·네 자리 이상(1234개)은 읽지 않고 확인 필요로
+  if(/\d\.\d/.test(t) || /\d{4,}/.test(t)) return -1;
+  let m = t.match(QTY_UNIT_RE) || t.match(/[xX×*]\s*(\d{1,3})(?!\d)/) || t.match(/(?:^|\D)(\d{1,3})\s*[xX×]/);
   if(m) return parseInt(m[1], 10);
   m = t.match(KNUM_RE);
   if(m) return KNUM[m[1]];
-  m = t.match(/(?:^|\s)(\d{1,2})(?=\s|요|[~!.,]|$)/);
+  // 단위 없는 숫자는 한 자리만 수량으로 본다(95·12 같은 사이즈·시각은 수량 아님)
+  m = t.match(/(?:^|\s)([1-9])(?=\s|요|[~!.,]|$)/);
   if(m) return parseInt(m[1], 10);
   return null;
+}
+// 댓글 속 옵션(색상·사이즈). 상품 이름에 든 단어는 옵션으로 보지 않는다
+function optsOf(seg, p){
+  const isKey = t => p.keys.some(k => k.n === norm(t) || k.base === norm(t));
+  const out = [];
+  const add = o => { if(o && !out.includes(o) && !isKey(o)) out.push(o); };
+  seg.split(/\s+/).forEach(raw => {
+    const t = raw.replace(/[~!.,]+$/, "").replace(/(으로|로|요|이요|을|를)$/, "");
+    if(!t) return;
+    if(OPT_WORDS.includes(t)) return add(t);
+    if(OPT_WORDS.includes(t.toUpperCase())) return add(t.toUpperCase());
+    if(/^(사이즈)?(\d{2,3}|S|M|L|XL|XXL|FREE|프리)$/i.test(t)) return add(t.replace(/^사이즈/, "").toUpperCase());
+    const m = t.match(OPT_QTY_RE);
+    if(m) return add(OPT_WORDS.find(w => w.toLowerCase() === m[1].toLowerCase()));
+    // 「블랙니트」처럼 상품명에 붙여 쓴 색상
+    const n = norm(t);
+    COLOR_WORDS.forEach(c => {
+      if(n.length <= c.length) return;
+      if((n.startsWith(c) && p.keys.some(k => !k.num && n.slice(c.length).startsWith(k.n))) ||
+         (n.endsWith(c) && p.keys.some(k => !k.num && n.slice(0, -c.length).endsWith(k.n)))) add(c);
+    });
+  });
+  return out;
+}
+// 「블랙 말고 베이지로」「베이지로 바꿔 주세요」 → 바꿀 옵션(from)과 새 옵션(to)
+function changeOpts(rest, p){
+  const P = p || { keys: [] };
+  const toks = rest.split(/\s+/);
+  let to = optsOf(toks.filter(t => /(으로|로)$/.test(t)).join(" "), P);
+  let from = optsOf(toks.filter(t => !/(으로|로)$/.test(t)).join(" "), P);
+  const m = rest.match(/(.*?)(말고|대신)(.*)/);
+  if(m && !to.length){ from = optsOf(m[1], P); to = optsOf(m[3], P); }
+  return { from, to: to.filter(x => !from.includes(x)) };
 }
 const looksOrder = t => /\d/.test(t) || INTENT_RE.test(t) || KNUM_RE.test(" " + t + " ");
 function parseChat(raw, prods){
@@ -425,37 +486,106 @@ function parseChat(raw, prods){
   }
   // 질문은 주문이 아님 → 확인 필요
   if(/[?？]/.test(rest)) return matchProduct(rest, prods) ? [{ ok:false, raw }] : [{ ok:false, raw, chat:true }];
+  // 취소·변경: 앞 주문에 반영할 지시로 돌려준다(convert에서 처리)
+  const isCancel = CANCEL_RE.test(rest), isChange = CHANGE_RE.test(rest);
+  if(isCancel || isChange){
+    const p = matchProduct(rest, prods);
+    if(isChange){ const c = changeOpts(rest, p); return [{ ok:false, raw, act:"change", nick, product: p ? p.name : "", from: c.from, to: c.to }]; }
+    const q = p ? readQtyChat(rest, p) : null;
+    return [{ ok:false, raw, act:"cancel", nick, product: p ? p.name : "", opts: optsOf(rest, p || { keys: [] }), qty: q > 0 ? q : 0 }];
+  }
+  // 상품 없이 「1개 더요」: 같은 사람의 앞 주문에 더한다
+  if(!matchProduct(rest, prods)){
+    const mm = rest.match(MORE_RE);
+    if(mm) return [{ ok:false, raw, act:"more", nick, qty: mm[1] ? (KNUM[mm[1]] || parseInt(mm[1], 10)) : 1 }];
+  }
   const segs = rest.split(/\s*(?:이랑|랑|하고|그리고|,|\+|&)\s*/).filter(Boolean);
   const out = [];
   segs.forEach(seg => {
     const p = matchProduct(seg, prods);
     if(!p){ if(looksOrder(seg)) out.push({ ok:false, raw }); return; }
+    // 한 줄에 옵션별 주문이 여럿: 「블랙1 베이지1」
+    const pairs = [...seg.matchAll(PAIR_RE)]
+      .map(x => ({ opt: OPT_WORDS.find(w => w.toLowerCase() === x[2].toLowerCase()), q: parseInt(x[3], 10), unit: !!x[4] }))
+      .filter(x => x.q > 0 && (x.unit || x.q < 10) && !p.keys.some(k => k.n === norm(x.opt)));
+    if(pairs.length >= 2){
+      const base = optsOf(seg, p).filter(o => !pairs.some(x => x.opt === o));
+      pairs.forEach(x => out.push({ ok:true, nick, product: p.name, option: base.concat([x.opt]).join(" "), qty: x.q }));
+      return;
+    }
     let q = readQtyChat(seg, p);
+    if(q === null && pairs.length === 1) q = pairs[0].q;
     if(q === null && INTENT_RE.test(rest)) q = 1;
     if(q === null || q <= 0 || q > 999){ out.push({ ok:false, raw }); return; }
-    const opts = seg.split(/\s+/).map(t => t.replace(/(으로|로|요|이요)$/, "")).filter(t => OPT_WORDS.includes(t) || OPT_WORDS.includes(t.toUpperCase()) || /^(사이즈)?\s*(\d{2,3}|S|M|L|XL|XXL|FREE|프리)$/i.test(t) && !p.keys.some(k => k.n === norm(t) || k.base === norm(t)));
+    const opts = optsOf(seg, p);
     out.push({ ok:true, nick, product: p.name, option: opts.length ? opts.join(" ") : "-", qty: q });
   });
   if(!out.length) return [{ ok:false, raw, chat: !looksOrder(rest) }];
   // 한 줄에서 실패가 섞이면 실패 1개만 남김
   const oks = out.filter(o => o.ok);
   return oks.length ? (oks.length < out.length ? oks.concat([{ ok:false, raw }]) : oks) : [{ ok:false, raw }];
-  return out;
+}
+// 취소·변경·추가를 같은 닉네임의 앞 주문에 반영. 대상이 없거나 애매하면 확인 필요로 남긴다
+function applyAct(a, orders, fails){
+  const unsure = () => { fails.push({ ok:false, raw: a.raw }); };
+  const done = t => { fails.push({ ok:false, raw: "(" + t + ") " + a.raw }); };
+  if(!a.nick) return unsure();
+  const mine = orders.filter(o => o.qty > 0 && o.nick === a.nick && (!a.product || o.product === a.product));
+  const has = (o, xs) => xs.every(x => o.option.split(" ").includes(x));
+  const kinds = c => new Set(c.map(o => o.product + "\u0001" + o.option)).size;
+  if(a.act === "cancel"){
+    const c = mine.filter(o => has(o, a.opts));
+    if(!c.length) return unsure();
+    if(a.qty > 0){
+      let left = a.qty;
+      for(let i = c.length - 1; i >= 0 && left > 0; i--){ const d = Math.min(c[i].qty, left); c[i].qty -= d; left -= d; }
+    } else c.forEach(o => { o.qty = 0; });
+    return done("취소 반영");
+  }
+  if(a.act === "change"){
+    if(!a.to.length) return unsure();
+    const c = a.from.length ? mine.filter(o => has(o, a.from)) : mine;
+    if(!c.length || kinds(c) > 1) return unsure();
+    const color = x => COLOR_WORDS.includes(x);
+    c.forEach(o => {
+      let ops = o.option === "-" ? [] : o.option.split(" ");
+      ops = a.from.length ? ops.filter(x => !a.from.includes(x)) : ops.filter(x => !a.to.some(y => color(x) === color(y)));
+      a.to.forEach(x => { if(!ops.includes(x)) ops.push(x); });
+      o.option = ops.length ? ops.join(" ") : "-";
+    });
+    return done("변경 반영");
+  }
+  if(a.act === "more"){
+    if(!mine.length || kinds(mine) > 1) return unsure();
+    const o = mine[mine.length - 1];
+    orders.push({ ok:true, nick: a.nick, product: o.product, option: o.option, qty: a.qty });
+  }
 }
 function convert(text){
   const lines = text.split(/\r?\n/);
   const orders = [], fails = [];
-  const plist = (document.getElementById("prods").value || "").split(/[,，\n]/).map(x => x.trim()).filter(Boolean).map(name => ({ name, keys: prodKeys(name) }));
+  const seen = new Set();
+  const plist = (document.getElementById("prods").value || "").split(/[,，\n]/).map(x => x.trim()).filter(x => x && !seen.has(x) && seen.add(x)).map(name => ({ name, keys: prodKeys(name) }));
   if(plist.length){
-    lines.forEach(l => parseChat(l, plist).forEach(r => { if(r.ok) orders.push(r); else if(!r.chat) fails.push(r); }));
+    lines.forEach(l => parseChat(l, plist).forEach(r => {
+      if(r.ok) orders.push(r);
+      else if(r.act) applyAct(r, orders, fails);
+      else if(!r.chat) fails.push(r);
+    }));
   } else {
-    lines.forEach(l => { const r = parseLine(l); if(!r) return; (r.ok ? orders : fails).push(r); });
+    lines.forEach(l => {
+      const r = parseLine(l); if(!r) return;
+      // 상품 목록 없이 읽을 때 취소·변경 댓글은 주문으로 더하지 않는다
+      if(r.ok && (CANCEL_RE.test(l) || CHANGE_RE.test(l))){ fails.push({ ok:false, raw: l }); return; }
+      (r.ok ? orders : fails).push(r);
+    });
   }
+  const kept = orders.filter(o => o.qty > 0);
   const pick = new Map();
-  orders.forEach(o => { const k = o.product + "\u0001" + o.option; pick.set(k, (pick.get(k) || 0) + o.qty); });
+  kept.forEach(o => { const k = o.product + "\u0001" + o.option; pick.set(k, (pick.get(k) || 0) + o.qty); });
   const picks = [...pick.entries()].map(([k,q]) => { const [p,o] = k.split("\u0001"); return { product:p, option:o, qty:q }; })
     .sort((a,b) => a.product.localeCompare(b.product,"ko") || a.option.localeCompare(b.option,"ko"));
-  return { orders, fails, picks };
+  return { orders: kept, fails, picks };
 }
 
 /* ---------- 화면 ---------- */
@@ -517,7 +647,7 @@ function render(r){
       `<tr class="total"><td colspan="2">합계</td><td class="n">${total}</td></tr>`;
   }
   const fb = document.getElementById("failBox");
-  if(f){ fb.style.display = "block"; fb.innerHTML = `<b>확인 필요 ${f}줄</b> · 주문으로 읽지 못했습니다(문의·잡담이거나 수량이 없음)<ul>` + r.fails.slice(0,20).map(x => `<li>${esc(x.raw)}</li>`).join("") + "</ul>"; }
+  if(f){ fb.style.display = "block"; fb.innerHTML = `<b>확인 필요 ${f}줄</b> · 주문으로 읽지 못한 줄(문의·잡담·수량 없음)과, 앞 주문에 반영한 취소·변경 줄입니다<ul>` + r.fails.slice(0,20).map(x => `<li>${esc(x.raw)}</li>`).join("") + "</ul>"; }
   else fb.style.display = "none";
   box.scrollIntoView({ behavior:"smooth", block:"start" });
 }
